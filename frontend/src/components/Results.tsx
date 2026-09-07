@@ -120,7 +120,7 @@ export const Results: React.FC<ResultsProps> = ({ response, onNavigateHome, sess
   // Initialize Chat Session in Vector DB on load
   useEffect(() => {
     if (response.itinerary) {
-      fetch('http://127.0.0.1:8000/chat/init', {
+      fetch('/chat/init', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -150,7 +150,7 @@ export const Results: React.FC<ResultsProps> = ({ response, onNavigateHome, sess
     setIsChatLoading(true);
 
     try {
-      const chatRes = await fetch('http://127.0.0.1:8000/chat/query', {
+      const chatRes = await fetch('/chat/query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

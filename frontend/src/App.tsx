@@ -2,6 +2,7 @@ import { useState } from 'react';
 import Hero from '@/components/Hero';
 import Login from '@/components/Login';
 import Results from '@/components/Results';
+import { fetchPlan } from './api';
 import './index.css';
 
 interface TravelContext {
@@ -50,11 +51,7 @@ function App() {
     setSessionId(sid);
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/plan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: prompt })
-      });
+      const res = await fetchPlan({ message: prompt });
 
       if (!res.ok) {
         throw new Error('Failed to connect to the travel planner backend.');
@@ -79,14 +76,10 @@ function App() {
     setView('loading');
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/plan', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: originalMessage,
-          clarification_response: answer,
-          session_context: response.session_context
-        })
+      const res = await fetchPlan({
+        message: originalMessage,
+        clarification_response: answer,
+        session_context: response.session_context
       });
 
       if (!res.ok) {
