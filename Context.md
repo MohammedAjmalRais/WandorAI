@@ -547,9 +547,7 @@ The top-level `App` component manages a five-state view machine:
 - Dispatches `onPlanTrip(promptText)`.
 
 #### `Results.tsx` (`frontend/src/components/Results.tsx`)
-- **Trip Summary Banner:** Displays origin, destination, dates, round-trip status, and traveler count.
-- **Tabbed Interface:**
-  - **Itinerary:** Renders rich Markdown via `ReactMarkdown` with custom typography. Displays itemized budget cards (Flights, Hotels, Food & Transit, Activities, Total). Contains a **Download PDF** button triggering clean `@media print` CSS.
+  - **Itinerary & Header Actions:** Renders rich Markdown via `ReactMarkdown` with custom typography. Features prominent **Download PDF** buttons with Lucide icons (`FileDown` in the Journey Header and `Download` in the Itinerary tab) triggering automated tab switching, formatted document title assignment (`Wandor-Itinerary-[Destination]`), and clean `@media print` CSS with custom header metadata. Displays itemized budget cards (Flights, Hotels, Food & Transit, Activities, Total).
   - **Flights:** Renders flight cards with airlines, departure/arrival times, stops, duration, and formatted prices.
   - **Hotels:** Renders hotel cards with location, star rating, reviews, nightly price, and amenities badges.
   - **Weather:** Renders weather condition summaries and daily high/low cards.

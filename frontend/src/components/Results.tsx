@@ -17,7 +17,9 @@ import {
   ArrowRightLeft,
   ArrowRight,
   TrendingUp,
-  AlertTriangle
+  AlertTriangle,
+  Download,
+  FileDown
 } from 'lucide-react';
 
 interface FlightOption {
@@ -219,6 +221,25 @@ export const Results: React.FC<ResultsProps> = ({ response, onNavigateHome, sess
   const returnDateFormatted = formatTravelDate(context.return_date) || 'September 30, 2026';
   const isRoundTrip = !!context.return_date;
 
+  const handleDownloadPDF = () => {
+    const originalTitle = document.title;
+    const cleanDest = (context.destination || 'Travel').replace(/[^a-zA-Z0-9]/g, '-');
+    document.title = `Wandor-Itinerary-${cleanDest}`;
+
+    if (activeTab !== 'itinerary') {
+      setActiveTab('itinerary');
+      setTimeout(() => {
+        window.print();
+        document.title = originalTitle;
+      }, 250);
+    } else {
+      window.print();
+      setTimeout(() => {
+        document.title = originalTitle;
+      }, 500);
+    }
+  };
+
   return (
     <div 
       className="min-h-svh w-full relative overflow-x-hidden flex flex-col z-0 select-text font-body text-[#111111] pb-48"
@@ -275,6 +296,18 @@ export const Results: React.FC<ResultsProps> = ({ response, onNavigateHome, sess
               Here's your journey<br />crafted for you.
             </h1>
           </div>
+
+          {/* Download PDF Action Button */}
+          {response.itinerary && (
+            <button
+              onClick={handleDownloadPDF}
+              className="flex items-center gap-2.5 px-6 py-3.5 bg-[#111111] hover:bg-[#2A2926] text-[#F7F3EA] text-sm font-semibold rounded-full transition-all duration-200 shadow-md active:scale-95 cursor-pointer border border-[#111111] group select-none whitespace-nowrap"
+              title="Download Itinerary as an offline PDF"
+            >
+              <FileDown className="w-4.5 h-4.5 text-[#A85D3B] group-hover:translate-y-0.5 transition-transform" />
+              <span>Download PDF Itinerary</span>
+            </button>
+          )}
         </div>
       </header>
 
@@ -518,17 +551,30 @@ export const Results: React.FC<ResultsProps> = ({ response, onNavigateHome, sess
                 </h2>
               </div>
               <button
-                onClick={() => window.print()}
-                className="bg-transparent border border-[#D8CBB7] hover:bg-[#F2EDE4] text-xs font-semibold px-4 py-2 rounded-full cursor-pointer text-[#514133] transition-colors active:scale-95 flex items-center gap-2"
+                onClick={handleDownloadPDF}
+                className="bg-[#F7F3EA] border border-[#D8CBB7] hover:bg-[#F2EDE4] text-xs font-semibold px-4 py-2.5 rounded-full cursor-pointer text-[#514133] transition-colors active:scale-95 flex items-center gap-2 group shadow-2xs select-none"
+                title="Download Itinerary as an offline PDF"
               >
-                Download PDF
+                <Download className="w-3.5 h-3.5 text-[#A85D3B] group-hover:translate-y-0.5 transition-transform" />
+                <span>Download PDF</span>
               </button>
             </div>
             
             <div className="printable-itinerary flex flex-col gap-6 bg-transparent">
-              <h1 className="hidden print:block font-display text-[32px] font-bold text-black border-b border-[#DED7CA] pb-4 mb-4">
-                Wandor Travel Itinerary: {originLabel} to {destLabel}
-              </h1>
+              <div className="hidden print:block border-b border-[#DED7CA] pb-4 mb-2">
+                <div className="flex justify-between items-center text-xs text-[#8A847A] font-semibold uppercase tracking-wider mb-2">
+                  <span>WandorAI Personalized Travel Plan</span>
+                  <span>Generated Itinerary</span>
+                </div>
+                <h1 className="font-display text-[32px] font-bold text-black leading-tight">
+                  {originLabel} to {destLabel}
+                </h1>
+                <div className="flex gap-6 mt-3 text-sm text-[#514133] font-medium">
+                  <span><strong>Dates:</strong> {departDateFormatted} {isRoundTrip ? `– ${returnDateFormatted}` : ''}</span>
+                  <span><strong>Travelers:</strong> {context.travelers || 1}</span>
+                  {context.budget_preference && <span><strong>Budget Style:</strong> {context.budget_preference}</span>}
+                </div>
+              </div>
 
               <article className="markdown-body font-body leading-relaxed text-[#111111] prose max-w-none text-[15px]">
                 <ReactMarkdown>{response.itinerary}</ReactMarkdown>
