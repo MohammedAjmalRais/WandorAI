@@ -55,6 +55,7 @@ interface WeatherForecast {
     temp_min?: number;
     temp_max?: number;
     condition?: string;
+    description?: string;
     humidity?: number;
     wind_speed?: number;
   }>;
@@ -104,6 +105,67 @@ interface ResultsProps {
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
+}
+
+function cleanItineraryMarkdown(raw?: string): string {
+  if (!raw) return '';
+  // Split single-line concatenated tables (e.g. `| |`) into proper linebreaks
+  const text = raw.replace(/\|\s*\|\s*/g, '|\n|');
+  
+  const lines = text.split('\n');
+  const cleaned: string[] = [];
+  const tableBuffer: string[] = [];
+  let inTable = false;
+
+  const flushTable = (tbl: string[]) => {
+    if (!tbl.length) return;
+    const rows: string[][] = [];
+    for (const line of tbl) {
+      if (/^\s*\|?[\s\-:]+(\|[\s\-:]+)+\|?\s*$/.test(line)) continue;
+      const cells = line.split('|').map(c => c.trim());
+      if (cells.length && !cells[0]) cells.shift();
+      if (cells.length && !cells[cells.length - 1]) cells.pop();
+      if (cells.length) rows.push(cells);
+    }
+    if (!rows.length) return;
+    const header = rows[0];
+    const dataRows = rows.slice(1);
+    for (const r of dataRows) {
+      if (!r.length) continue;
+      const title = r[0];
+      const subtitle = (r.length > 1 && header.length > 1 && /(location|neighborhood|route|airline)/i.test(header[1]))
+        ? ` (${r[1]})` : '';
+      cleaned.push(`- **${title}**${subtitle}`);
+      const startIdx = subtitle ? 2 : 1;
+      for (let i = startIdx; i < r.length; i++) {
+        const col = header[i] || `Detail ${i + 1}`;
+        if (r[i]) cleaned.push(`  - **${col}:** ${r[i]}`);
+      }
+      cleaned.push('');
+    }
+  };
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
+      tableBuffer.push(trimmed);
+      inTable = true;
+    } else {
+      if (inTable) {
+        flushTable(tableBuffer);
+        tableBuffer.length = 0;
+        inTable = false;
+      }
+      cleaned.push(line);
+    }
+  }
+  if (inTable) flushTable(tableBuffer);
+
+  return cleaned.join('\n')
+    .replace(/\|[\s\-:]+\|/g, '')
+    .replace(/^\s*\|\s*/gm, '')
+    .replace(/\s*\|\s*$/gm, '')
+    .replace(/\s*\|\s*/g, ' — ');
 }
 
 export const Results: React.FC<ResultsProps> = ({ response, onNavigateHome, session_id }) => {
@@ -242,7 +304,7 @@ export const Results: React.FC<ResultsProps> = ({ response, onNavigateHome, sess
 
   return (
     <div 
-      className="min-h-svh w-full relative overflow-x-hidden flex flex-col z-0 select-text font-body text-[#111111] pb-48"
+      className="min-h-svh w-full relative overflow-x-hidden flex flex-col z-0 select-text font-body text-[#111111] pb-48 print:min-h-0 print:pb-0 print:overflow-visible print:block print:static print:bg-none print:bg-white"
       style={{
         backgroundImage: "url('/bg_journal.jpg')",
         backgroundSize: 'cover',
@@ -251,7 +313,7 @@ export const Results: React.FC<ResultsProps> = ({ response, onNavigateHome, sess
         backgroundRepeat: 'no-repeat'
       }}
     >      {/* HEADER NAVBAR */}
-      <nav className="relative z-10 flex items-center justify-between px-20 pt-6 pb-4 max-md:px-6 max-md:pt-5 w-full">
+      <nav className="print:hidden relative z-10 flex items-center justify-between px-20 pt-6 pb-4 max-md:px-6 max-md:pt-5 w-full">
         {/* Left branding logo */}
         <span 
           onClick={onNavigateHome} 
@@ -277,10 +339,10 @@ export const Results: React.FC<ResultsProps> = ({ response, onNavigateHome, sess
       </nav>
 
       {/* TOP HEADER */}
-      <header className="px-20 max-md:px-6 max-w-[1450px] w-full mx-auto mt-6 relative z-10 flex flex-col items-start gap-4">
+      <header className="print:hidden px-20 max-md:px-6 max-w-[1450px] w-full mx-auto mt-6 relative z-10 flex flex-col items-start gap-4">
         {/* Back button */}
         <button 
-          onClick={onNavigateHome}
+          onClick={onNavigateHome} 
           className="bg-transparent border-none flex items-center gap-2 text-xs font-semibold text-[#6F6A62] hover:text-[#111111] cursor-pointer transition-colors"
         >
           <ArrowLeft className="w-3.5 h-3.5" /> Back to planner
@@ -312,7 +374,7 @@ export const Results: React.FC<ResultsProps> = ({ response, onNavigateHome, sess
       </header>
 
       {/* TRIP INFORMATION CARD */}
-      <section className="px-20 max-md:px-6 max-w-[1450px] w-full mx-auto mt-6 relative z-10">
+      <section className="print:hidden px-20 max-md:px-6 max-w-[1450px] w-full mx-auto mt-6 relative z-10">
         <div className="bg-[#FBF8F1] border border-[#DED7CA] rounded-3xl p-6 shadow-[0_4px_24px_rgba(40,32,20,0.03)]">
           <div className="flex flex-col gap-5">
             {/* Trip Type Selectors */}
@@ -374,7 +436,7 @@ export const Results: React.FC<ResultsProps> = ({ response, onNavigateHome, sess
       </section>
 
       {/* TAB NAVIGATION */}
-      <section className="px-20 max-md:px-6 max-w-[1450px] w-full mx-auto mt-8 relative z-10 flex gap-4 select-none overflow-x-auto pb-2 scrollbar-none">
+      <section className="print:hidden px-20 max-md:px-6 max-w-[1450px] w-full mx-auto mt-8 relative z-10 flex gap-4 select-none overflow-x-auto pb-2 scrollbar-none">
         {/* Itinerary Tab */}
         <button
           onClick={() => setActiveTab('itinerary')}
@@ -429,7 +491,7 @@ export const Results: React.FC<ResultsProps> = ({ response, onNavigateHome, sess
       </section>
 
       {/* MAIN CONTENT DISPLAY AREA */}
-      <section className="px-20 max-md:px-6 max-w-[1450px] w-full mx-auto mt-6 relative z-10 flex-grow">
+      <section className="px-20 max-md:px-6 max-w-[1450px] w-full mx-auto mt-6 relative z-10 flex-grow print:p-0 print:m-0 print:max-w-full print:w-full print:block">
         
         {/* ==================== FLIGHTS TAB CONTENT ==================== */}
         {activeTab === 'flights' && (
@@ -542,8 +604,8 @@ export const Results: React.FC<ResultsProps> = ({ response, onNavigateHome, sess
 
         {/* ==================== ITINERARY TAB CONTENT ==================== */}
         {activeTab === 'itinerary' && response.itinerary && (
-          <div className="bg-[#FBF8F1] border border-[#DED7CA] rounded-[28px] p-9 max-md:p-6 shadow-[0_8px_32px_rgba(40,32,20,0.03)] flex flex-col gap-6">
-            <div className="flex items-center justify-between pb-2 border-b border-[#E7E1D7] select-none">
+          <div className="bg-[#FBF8F1] border border-[#DED7CA] rounded-[28px] p-9 max-md:p-6 shadow-[0_8px_32px_rgba(40,32,20,0.03)] flex flex-col gap-6 print:bg-transparent print:border-none print:p-0 print:shadow-none print:rounded-none print:block">
+            <div className="print:hidden flex items-center justify-between pb-2 border-b border-[#E7E1D7] select-none">
               <div className="flex items-center gap-2.5">
                 <Compass className="w-5 h-5 text-[#A85D3B]" />
                 <h2 className="font-display text-[26px] font-semibold text-[#111111]">
@@ -577,7 +639,7 @@ export const Results: React.FC<ResultsProps> = ({ response, onNavigateHome, sess
               </div>
 
               <article className="markdown-body font-body leading-relaxed text-[#111111] prose max-w-none text-[15px]">
-                <ReactMarkdown>{response.itinerary}</ReactMarkdown>
+                <ReactMarkdown>{cleanItineraryMarkdown(response.itinerary)}</ReactMarkdown>
               </article>
 
               {/* Budget Summary Section */}
@@ -715,14 +777,20 @@ export const Results: React.FC<ResultsProps> = ({ response, onNavigateHome, sess
                         {day.date || `Day ${dIdx + 1}`}
                       </span>
                       <span className="text-2xl font-bold text-[#111111]">
-                        {day.temp_day ? `${day.temp_day.toFixed(0)}°C` : 'N/A'}
+                        {day.temp_day !== undefined && day.temp_day !== null 
+                          ? `${Math.round(day.temp_day)}°C` 
+                          : (day.temp_max !== undefined && day.temp_max !== null 
+                              ? `${Math.round(day.temp_max)}°C` 
+                              : (day.temp_min !== undefined && day.temp_min !== null 
+                                  ? `${Math.round(day.temp_min)}°C` 
+                                  : 'N/A'))}
                       </span>
                       <span className="text-xs font-bold uppercase text-[#77745A] bg-[#E8DDC7]/40 px-2 py-0.5 rounded">
-                        {day.condition || 'Sunny'}
+                        {day.condition || day.description || 'Clear'}
                       </span>
                       <div className="flex gap-2 text-[10px] font-semibold text-[#8A847A] mt-1">
-                        <span>Min: {day.temp_min ? `${day.temp_min.toFixed(0)}°` : 'N/A'}</span>
-                        <span>Max: {day.temp_max ? `${day.temp_max.toFixed(0)}°` : 'N/A'}</span>
+                        <span>Min: {day.temp_min !== undefined && day.temp_min !== null ? `${Math.round(day.temp_min)}°` : 'N/A'}</span>
+                        <span>Max: {day.temp_max !== undefined && day.temp_max !== null ? `${Math.round(day.temp_max)}°` : 'N/A'}</span>
                       </div>
                     </div>
                   ))}
@@ -736,7 +804,7 @@ export const Results: React.FC<ResultsProps> = ({ response, onNavigateHome, sess
 
 
       {/* FLOATING RAG CHATBOT BUTTON */}
-      <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3 select-text">
+      <div className="print:hidden fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3 select-text">
         {/* Chat Window Panel */}
         {isChatOpen && (
           <div className="w-[380px] max-md:w-[calc(100vw-32px)] h-[480px] bg-[#FBF8F1] border border-[#DED7CA] rounded-3xl shadow-[0_12px_40px_rgba(45,35,25,0.12)] flex flex-col overflow-hidden animate-fade-in z-50">
@@ -776,8 +844,12 @@ export const Results: React.FC<ResultsProps> = ({ response, onNavigateHome, sess
                         <span className="w-1.5 h-1.5 bg-[#A85D3B] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                         <span className="w-1.5 h-1.5 bg-[#A85D3B] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                       </span>
+                    ) : isUser ? (
+                      <div className="whitespace-pre-wrap">{msg.content}</div>
                     ) : (
-                      msg.content
+                      <div className="chat-markdown text-sm leading-relaxed text-[#111111] [&>p]:mb-2 [&>p:last-child]:mb-0 [&>ul]:my-1.5 [&>ul]:pl-4 [&>ul]:list-disc [&>ul>li]:mb-1 [&>ol]:my-1.5 [&>ol]:pl-4 [&>ol]:list-decimal [&>ol>li]:mb-1 [&_strong]:text-[#111111] [&_strong]:font-bold">
+                        <ReactMarkdown>{cleanItineraryMarkdown(msg.content)}</ReactMarkdown>
+                      </div>
                     )}
                   </div>
                 );

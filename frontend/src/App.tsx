@@ -54,7 +54,12 @@ function App() {
       const res = await fetchPlan({ message: prompt });
 
       if (!res.ok) {
-        throw new Error('Failed to connect to the travel planner backend.');
+        let msg = 'Failed to generate travel plan.';
+        try {
+          const errData = await res.json();
+          msg = errData.detail || errData.message || (errData.errors && errData.errors[0]) || msg;
+        } catch (_) {}
+        throw new Error(msg);
       }
 
       const data: TravelPlanResponse = await res.json();
@@ -83,7 +88,12 @@ function App() {
       });
 
       if (!res.ok) {
-        throw new Error('Failed to connect to the travel planner backend.');
+        let msg = 'Failed to generate travel plan.';
+        try {
+          const errData = await res.json();
+          msg = errData.detail || errData.message || (errData.errors && errData.errors[0]) || msg;
+        } catch (_) {}
+        throw new Error(msg);
       }
 
       const data: TravelPlanResponse = await res.json();
@@ -109,7 +119,7 @@ function App() {
   };
 
   return (
-    <div className="w-full min-h-svh bg-white">
+    <div className="w-full min-h-svh bg-white print:min-h-0 print:overflow-visible print:block">
       {/* 1. HOME VIEW */}
       {view === 'home' && (
         <div className="relative">
@@ -117,7 +127,7 @@ function App() {
           {apiError && (
             <div className="bg-[#F3E3DA] border-b border-[#D7B7A7] text-[#6F3E32] py-3.5 px-6 text-center text-sm font-semibold select-none z-50 relative flex items-center justify-center gap-2">
               <span>⚠️</span>
-              <span>{apiError} (Ensure backend server runs on localhost:8000)</span>
+              <span>{apiError}</span>
               <button 
                 onClick={() => setApiError(null)} 
                 className="bg-transparent border-none font-bold text-lg cursor-pointer ml-4 leading-none text-[#6F3E32]"

@@ -41,7 +41,7 @@ async def health() -> dict[str, str]:
     settings = get_settings()
     return {
         "status": "ok",
-        "gemini_configured": str(bool(settings.google_api_key)),
+        "gemini_configured": str(bool(settings.google_api_key or settings.groq_api_key)),
         "flight_api_configured": str(bool(settings.flight_api_key)),
         "hotel_api_configured": str(bool(settings.hotel_api_key)),
         "openweather_configured": str(bool(settings.openweather_api_key)),
@@ -55,10 +55,10 @@ async def create_travel_plan(request: TravelPlanRequest) -> TravelPlanResponse:
         raise HTTPException(status_code=400, detail="Travel request message is required.")
 
     settings = get_settings()
-    if not settings.google_api_key:
+    if not settings.groq_api_key and not settings.google_api_key:
         raise HTTPException(
             status_code=503,
-            detail="GOOGLE_API_KEY is not configured. Add it to your .env file.",
+            detail="Neither GROQ_API_KEY nor GOOGLE_API_KEY is configured. Add it to your .env file.",
         )
 
     planner = get_planner()

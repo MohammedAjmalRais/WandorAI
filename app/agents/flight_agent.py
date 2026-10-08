@@ -66,6 +66,7 @@ class FlightSearchAgent:
             options.append(
                 FlightOption(
                     airline=first.get("airline"),
+                    flight_number=first.get("flight_number"),
                     departure_airport=first.get("departure_airport", {}).get("id")
                     if isinstance(first.get("departure_airport"), dict)
                     else first.get("departure_airport"),

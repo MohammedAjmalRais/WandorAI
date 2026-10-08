@@ -102,62 +102,99 @@ body {
 }
 
 @media print {
-  /* Hide all elements on the page */
-  body * {
-    visibility: hidden;
+  /* 1. Page margin and size setup */
+  @page {
+    margin: 15mm 15mm 15mm 15mm;
+    size: auto;
   }
-  
-  /* Make only the printable itinerary container and its descendants visible */
-  .printable-itinerary, 
-  .printable-itinerary * {
-    visibility: visible;
-  }
-  
-  /* Position the printable content cleanly at the top-left of the PDF page */
-  .printable-itinerary {
-    position: absolute;
-    left: 0;
-    top: 0;
-    width: 100%;
-    margin: 0;
-    padding: 0;
-    background: transparent !important;
-  }
-  
-  /* Reset background styles for printed output */
-  body, html {
+
+  /* 2. Reset html & body so overflow is visible across all pages */
+  html, body {
+    overflow: visible !important;
+    height: auto !important;
+    min-height: 100% !important;
     background-color: #ffffff !important;
     background-image: none !important;
     color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
+  /* 3. Ensure root and all wrapper containers allow natural multi-page flow */
+  #root, #root > div, main {
+    overflow: visible !important;
+    height: auto !important;
+    min-height: 0 !important;
+    position: static !important;
+    display: block !important;
+  }
+
+  /* 4. Hide all non-printable UI elements */
+  .print\:hidden,
+  nav,
+  header,
+  .no-print {
+    display: none !important;
+  }
+
+  /* 5. Natural in-flow printing (NEVER position: absolute) */
+  .printable-itinerary {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    overflow: visible !important;
+  }
+
+  /* 6. Typography, headers & page break management */
   .markdown-body {
+    color: #111111 !important;
+    font-size: 13.5px !important;
+    line-height: 1.6 !important;
+  }
+
+  .markdown-body h1 {
     color: #000000 !important;
+    border-bottom: 2px solid #111111 !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
   }
 
   .markdown-body h2 {
-    color: #000000 !important;
-    border-bottom: 1px solid #cccccc;
-    margin-top: 2rem !important;
-    page-break-after: avoid;
-    break-after: avoid;
+    color: #111111 !important;
+    border-bottom: 1px solid #DED7CA !important;
+    margin-top: 1.5rem !important;
+    margin-bottom: 0.5rem !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
   }
 
   .markdown-body h3 {
-    color: #000000 !important;
-    margin-top: 1.5rem !important;
-    page-break-after: avoid;
-    break-after: avoid;
+    color: #333333 !important;
+    margin-top: 1.2rem !important;
+    margin-bottom: 0.25rem !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
   }
 
   .markdown-body p, 
   .markdown-body ul, 
-  .markdown-body li {
-    orphans: 3;
-    widows: 3;
+  .markdown-body ol {
+    orphans: 3 !important;
+    widows: 3 !important;
+    margin-bottom: 0.75rem !important;
   }
 
-  /* Hide custom borders or boxes on printing if needed for clean layout */
+  .markdown-body li {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Budget summary table / cards layout in print */
   .printable-itinerary .border {
     border-color: #dddddd !important;
   }

@@ -33,6 +33,7 @@ class OrchestratorResult(BaseModel):
 
 class FlightOption(BaseModel):
     airline: str | None = None
+    flight_number: str | None = None
     departure_airport: str | None = None
     arrival_airport: str | None = None
     departure_time: str | None = None

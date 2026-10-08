@@ -68,15 +68,51 @@ class OpenWeatherService:
         for item in payload.get("list", []):
             dt = datetime.fromtimestamp(item["dt"])
             day_key = dt.strftime("%Y-%m-%d")
+            main = item.get("main", {})
+            weather_list = item.get("weather", [{}])
+            weather_obj = weather_list[0] if weather_list else {}
+            
+            temp = main.get("temp")
+            temp_min = main.get("temp_min", temp)
+            temp_max = main.get("temp_max", temp)
+            condition = weather_obj.get("main", "Clear")
+            description = weather_obj.get("description", "clear sky")
+            humidity = main.get("humidity", 0)
+            wind_speed = item.get("wind", {}).get("speed", 0)
+            
             if day_key not in daily:
                 daily[day_key] = {
                     "date": day_key,
-                    "temp_min": item["main"]["temp_min"],
-                    "temp_max": item["main"]["temp_max"],
-                    "description": item["weather"][0]["description"],
-                    "humidity": item["main"]["humidity"],
-                    "wind_speed": item.get("wind", {}).get("speed"),
+                    "temp_day": temp,
+                    "temp_min": temp_min,
+                    "temp_max": temp_max,
+                    "condition": condition,
+                    "description": description,
+                    "humidity": humidity,
+                    "wind_speed": wind_speed,
+                    "_temps": [temp] if temp is not None else [],
                 }
+            else:
+                if temp is not None:
+                    daily[day_key]["_temps"].append(temp)
+                if temp_min is not None:
+                    daily[day_key]["temp_min"] = min(daily[day_key]["temp_min"], temp_min)
+                if temp_max is not None:
+                    daily[day_key]["temp_max"] = max(daily[day_key]["temp_max"], temp_max)
+                # Prioritize daytime slot (11:00 to 15:00) for representative day temp and condition
+                if 11 <= dt.hour <= 15:
+                    if temp is not None:
+                        daily[day_key]["temp_day"] = temp
+                    daily[day_key]["condition"] = condition
+                    daily[day_key]["description"] = description
+
+        # Clean up temporary temps and calculate average if temp_day is somehow missing
+        for day_data in daily.values():
+            temps = day_data.pop("_temps", [])
+            if day_data.get("temp_day") is None and temps:
+                day_data["temp_day"] = sum(temps) / len(temps)
+            elif day_data.get("temp_day") is None:
+                day_data["temp_day"] = day_data.get("temp_max") or 20.0
 
         ordered_days = sorted(daily.keys())[:days]
         return {

@@ -16,15 +16,13 @@ export async function fetchPlan(payload: any): Promise<Response> {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      if (res.ok || res.status === 400 || res.status === 422) {
-        return res;
-      }
+      return res;
     } catch (err) {
       lastError = err;
     }
   }
 
-  throw lastError || new Error('Failed to connect to backend server. Make sure uvicorn is running on port 8000.');
+  throw lastError || new Error('Unable to connect to the backend server. Please verify the server is running.');
 }
 
 export function getChatBaseUrl(): string {

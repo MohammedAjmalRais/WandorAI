@@ -18,8 +18,11 @@ class Settings(BaseSettings):
     tavily_api_key: str = ""
     aviationstack_api_key: str = ""
 
-    gemini_model: str = "gemini-3.6-flash"
-    gemini_fallback_models: list[str] = ["gemini-3.5-flash", "gemini-3.6-pro", "gemini-2.5-flash"]
+    primary_llm_provider: str = "groq"
+    groq_model: str = "openai/gpt-oss-120b"
+    groq_fallback_models: list[str] = ["openai/gpt-oss-20b", "qwen/qwen3.8-27b"]
+    gemini_model: str = "gemini-3.5-flash"
+    gemini_fallback_models: list[str] = ["gemini-3.7-flash", "gemini-3.8-flash"]
     groq_api_key_fallback: str = ""
     groq_fallback_model: str = "openai/gpt-oss-20b"
 
